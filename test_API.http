@@ -1,0 +1,12 @@
+# 1. Créer un employé avec curl (POST request)
+curl -X POST http://localhost:5000/api/employees \
+  -H "Content-Type: application/json" \
+  -d '{
+    "firstName": "Jean",
+    "lastName": "Dupont",
+    "email": "jean@test.com",
+    "position": "Manager"
+  }'
+
+# 2. Récupérer la liste des employés (GET request)
+curl http://localhost:5000/api/employees
