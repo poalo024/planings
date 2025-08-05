@@ -7,4 +7,4 @@ const employeeSchema = new mongoose.Schema({
   position: { type: String }
 });
 
-module.exports = mongoose.model('Employee', employeeSchema);
+module.exports = mongoose.model('employees', employeeSchema);

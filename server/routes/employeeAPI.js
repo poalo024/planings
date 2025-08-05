@@ -1,9 +1,9 @@
 const express = require('express');
-const Employee = require('../models/Employees');  // attention au pluriel et chemin
+const Employee = require('../models/employees'); // tout en minuscule ici aussi
 
 const router = express.Router();
 
-// Ajouter un employé
+// POST - Ajouter un employé
 router.post('/', async (req, res) => {
     try {
         const employee = new Employee(req.body);
@@ -14,14 +14,26 @@ router.post('/', async (req, res) => {
     }
 });
 
-// Lister tous les employés
+// GET - Lister tous les employés
 router.get('/', async (req, res) => {
     try {
-const employees = await Employee.find();
-    res.send(employees);
+        const employees = await Employee.find();
+        res.send(employees);
     } catch (err) {
-res.status(500).send(err.message);
+        res.status(500).send(err.message);
     }
 });
 
 module.exports = router;
+// Supprimer un employé par ID
+router.delete('/:id', async (req, res) => {
+try {
+    const result = await Employee.findByIdAndDelete(req.params.id);
+    if (!result) {
+    return res.status(404).send('Employé non trouvé');
+    }
+    res.send('Employé supprimé avec succès');
+} catch (err) {
+    res.status(500).send(err.message);
+}
+});

@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const dotenv = require('dotenv');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
@@ -12,12 +13,21 @@ app.use(cors());
 app.use(express.json());
 
 // Connexion MongoDB (ton URI local)
-mongoose.connect('mongodb://localhost:27017/teamDB')
-    .then(() => console.log('✔ Connecté à MongoDB'))
-    .catch(err => console.log('❌ Erreur MongoDB:', err));
-
+// Connexion MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+useNewUrlParser: true,
+useUnifiedTopology: true,
+}).then(() => {
+console.log("✔ Connecté à MongoDB");
+}).catch((err) => {
+console.error("Erreur MongoDB :", err);
+});
 // Routes
-app.use('/api/employees', employeeRoutes); // <-- ici tu utilises les routes
+app.use('/api/employees', require('./routes/employeeAPI'));
+ // <-- ici tu utilises les routes
 
 const PORT = 5000;
 app.listen(PORT, () => console.log(`🚀 Backend prêt sur http://localhost:${PORT}`));
+console.log('Port:', process.env.PORT);
+console.log('Mongo URI:', process.env.MONGO_URI);
+
