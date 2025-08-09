@@ -1,62 +1,21 @@
-import axios from 'axios';
-import { useEffect, useState } from 'react';
+// src/App.js
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import Login from './components/auth/login.jsx';
+import Register from './components/auth/register.jsx';
+import Navbar from './components/navbar.jsx'; // Ajoutez l'extension .jsx
+import Dashboard from './pages/dashboard.jsx';
+import Home from './pages/home.jsx';
 
-function App() {
-  const [employees, setEmployees] = useState([]);
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', position: '' });
-
-  useEffect(() => {
-    axios.get('http://localhost:5000/api/employees')
-      .then(res => setEmployees(res.data))
-      .catch(console.error);
-  }, []);
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    axios.post('http://localhost:5000/api/employees', form)
-      .then(res => setEmployees([...employees, res.data]))
-      .catch(console.error);
-  };
-
+export default function App() {
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Gestion des Employés</h1>
-      
-      <form onSubmit={handleSubmit}>
-        <input
-          placeholder="Prénom"
-          value={form.firstName}
-          onChange={(e) => setForm({...form, firstName: e.target.value})}
-          required
-        />
-        <input
-          placeholder="Nom"
-          value={form.lastName}
-          onChange={(e) => setForm({...form, lastName: e.target.value})}
-          required
-        />
-        <input
-          placeholder="Email"
-          type="email"
-          value={form.email}
-          onChange={(e) => setForm({...form, email: e.target.value})}
-          required
-        />
-        <input
-          placeholder="Position"
-          value={form.position}
-          onChange={(e) => setForm({...form, position: e.target.value})}
-        />
-        <button type="submit">Ajouter</button>
-      </form>
-
-      <ul>
-        {employees.map(emp => (
-          <li key={emp._id}>{emp.firstName} {emp.lastName} {emp.position ? `(${emp.position})` : ''}</li>
-        ))}
-      </ul>
-    </div>
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+      </Routes>
+    </Router>
   );
 }
-
-export default App;
