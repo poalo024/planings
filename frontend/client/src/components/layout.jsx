@@ -1,1 +1,1 @@
-Commande ECHO activée.
+//Commande ECHO activée.
