@@ -1,156 +1,155 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function Register() {
-const [formData, setFormData] = useState({
-nom: '',
-prenom: '',
-username: '',
-email: '',
-password: '',
-confirmPassword: '',
+export default function Register({ currentUser }) {
+const [formData, setFormData] = useState({ 
+nom:'', 
+prenom:'', 
+username:'', 
+email:'', 
+password:'', 
+confirmPassword:'', 
+role:'user' 
 });
 const [error, setError] = useState('');
 const [success, setSuccess] = useState('');
 const [loading, setLoading] = useState(false);
 const [showPassword, setShowPassword] = useState(false);
-
 const navigate = useNavigate();
 
 const handleChange = (e) => {
-setFormData(prev => ({
-    ...prev,
-    [e.target.name]: e.target.value,
-}));
-setError('');
+setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+setError(''); 
 setSuccess('');
-};
-
-const togglePasswordVisibility = () => {
-setShowPassword(!showPassword);
 };
 
 const handleSubmit = async (e) => {
 e.preventDefault();
-setError('');
+setError(''); 
 setSuccess('');
 setLoading(true);
 
-// Log des données avant envoi
-console.log('Données à envoyer:', formData);
-
-// Validation simple côté frontend
 if (formData.password !== formData.confirmPassword) {
-    setError('Les mots de passe ne correspondent pas.');
-    setLoading(false);
+    setError('Les mots de passe ne correspondent pas'); 
+    setLoading(false); 
     return;
 }
 
-const { nom, prenom, username, email, password } = formData;
-if (!nom.trim() || !prenom.trim() || !username.trim() || !email.trim() || !password.trim()) {
-    setError('Tous les champs sont obligatoires.');
-    setLoading(false);
-    return;
+const { nom, prenom, username, email, password, role } = formData;
+if (!nom || !prenom || !username || !email || !password) { 
+    setError('Tous les champs sont obligatoires'); 
+    setLoading(false); 
+    return; 
 }
 
 try {
+    const token = localStorage.getItem('token');
     const response = await fetch('http://localhost:5000/api/users/register', {
     method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json'
+    headers: { 
+        'Content-Type': 'application/json', 
+        'Authorization': `Bearer ${token}` 
     },
-    body: JSON.stringify({
-        nom: nom.trim(),
-        prenom: prenom.trim(),
-        username: username.trim(),
-        email: email.trim(),
-        password: password.trim(),
-    }),
+    body: JSON.stringify({ nom, prenom, username, email, password, role }),
     });
-
+    
     const data = await response.json();
-
+    
     if (!response.ok) {
-    throw new Error(data.message || 'Erreur lors de l\'inscription');
+    throw new Error(data.message || `Erreur ${response.status} lors de l'inscription`);
     }
-
-    setSuccess('Inscription réussie ! Redirection vers la connexion...');
-    setTimeout(() => {
-    navigate('/login');
-    }, 2000);
-} catch (err) {
-    console.error('Erreur lors de l\'inscription:', err);
-    setError(err.message);
-} finally {
-    setLoading(false);
+    
+    setSuccess('Inscription réussie !'); 
+    setTimeout(() => navigate('/login'), 2000);
+} catch (err) { 
+    setError(err.message); 
+}
+finally { 
+    setLoading(false); 
 }
 };
 
 return (
-<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f6fa', padding: '1rem' }}>
-    <div style={{ background: '#fff', padding: '2rem 2.5rem', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', minWidth: '350px' }}>
-    <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>Inscription</h2>
-    {error && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
-    {success && <p style={{ color: 'green', textAlign: 'center' }}>{success}</p>}
-    <form onSubmit={handleSubmit}>
-        {['nom', 'prenom', 'username', 'email'].map(field => (
-        <div key={field} style={{ marginBottom: '1rem' }}>
-            <label htmlFor={field} style={{ textTransform: 'capitalize' }}>
-            {field === 'username' ? 'Nom d\'utilisateur' : field} :
-            </label>
-            <input
-            id={field}
-            name={field}
-            type={field === 'email' ? 'email' : 'text'}
-            value={formData[field]}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', marginTop: '0.25rem' }}
-            />
+<div style={{ minHeight:'100vh', display:'flex', justifyContent:'center', alignItems:'center', background:'#f5f6fa' }}>
+    <form onSubmit={handleSubmit} style={{ background:'#fff', padding:'2rem', borderRadius:'8px', width:'350px' }}>
+    <h2>Inscription</h2>
+    {error && <p style={{ color:'red' }}>{error}</p>}
+    {success && <p style={{ color:'green' }}>{success}</p>}
+
+    {['nom','prenom','username','email'].map(f => (
+        <div key={f} style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+            {f==='username'?'Nom utilisateur':f} :
+        </label>
+        <input 
+            type={f==='email'?'email':'text'} 
+            name={f} 
+            value={formData[f]} 
+            onChange={handleChange} 
+            required 
+            style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+        />
         </div>
-        ))}
-        {['password', 'confirmPassword'].map(field => (
-        <div key={field} style={{ marginBottom: '1rem', position: 'relative' }}>
-            <label htmlFor={field} style={{ textTransform: 'capitalize' }}>
-            {field === 'confirmPassword' ? 'Confirmer le mot de passe' : field} :
-            </label>
-            <input
-            id={field}
-            name={field}
-            type={showPassword ? 'text' : 'password'}
-            value={formData[field]}
-            onChange={handleChange}
-            required
-            style={{ width: '100%', padding: '0.5rem', borderRadius: '4px', border: '1px solid #ccc', marginTop: '0.25rem' }}
-            />
-            <span
-            onClick={togglePasswordVisibility}
-            style={{ position: 'absolute', right: '10px', top: '35px', cursor: 'pointer' }}
-            >
-            {showPassword ? '👁️' : '👁️‍🗨️'}
-            </span>
+    ))}
+
+    {['password','confirmPassword'].map(f => (
+        <div key={f} style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem' }}>
+            {f==='confirmPassword'?'Confirmer le mot de passe':'Mot de passe'} :
+        </label>
+        <input 
+            type={showPassword?'text':'password'} 
+            name={f} 
+            value={formData[f]} 
+            onChange={handleChange} 
+            required 
+            style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
+        />
         </div>
-        ))}
-        <button
-        type="submit"
-        disabled={loading}
-        style={{
-            width: '100%',
-            padding: '0.75rem',
-            borderRadius: '4px',
-            border: 'none',
-            background: loading ? '#999' : '#1976d2',
-            color: '#fff',
-            fontWeight: 'bold',
-            fontSize: '1rem',
-            cursor: loading ? 'not-allowed' : 'pointer',
-        }}
+    ))}
+
+    {currentUser?.role?.toLowerCase() === 'manager' && (
+        <div style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'block', marginBottom: '0.5rem' }}>Rôle :</label>
+        <select 
+            name="role" 
+            value={formData.role} 
+            onChange={handleChange}
+            style={{ width: '100%', padding: '0.5rem', border: '1px solid #ddd', borderRadius: '4px' }}
         >
-        {loading ? "Inscription..." : "S'inscrire"}
-        </button>
-    </form>
+            <option value="user">Utilisateur</option>
+            <option value="manager">Manager</option>
+        </select>
+        </div>
+    )}
+
+    <div style={{ marginBottom: '1rem' }}>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <input 
+            type="checkbox" 
+            checked={showPassword} 
+            onChange={() => setShowPassword(!showPassword)} 
+        /> 
+        Afficher le mot de passe
+        </label>
     </div>
+
+    <button 
+        type="submit" 
+        disabled={loading}
+        style={{ 
+        width: '100%', 
+        padding: '0.75rem', 
+        background: loading ? '#ccc' : '#007bff', 
+        color: 'white', 
+        border: 'none', 
+        borderRadius: '4px', 
+        cursor: loading ? 'not-allowed' : 'pointer' 
+        }}
+    >
+        {loading ? 'Inscription...' : 'S\'inscrire'}
+    </button>
+    </form>
 </div>
 );
 }

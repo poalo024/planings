@@ -2,63 +2,76 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
 const authenticateToken = async (req, res, next) => {
-try {
-const authHeader = req.headers['authorization'];
-const token = authHeader && authHeader.split(' ')[1];
+    try {
+        const authHeader = req.headers['authorization'];
+        const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
 
-if (!token) {
-    return res.status(401).json({ message: 'Access token required' });
-}
+        if (!token) {
+            return res.status(401).json({ message: 'Token manquant' });
+        }
 
-const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-const user = await User.findById(decoded.userId).select('-password');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
+        
+        // Vérifier si l'utilisateur existe toujours et est actif
+        const user = await User.findById(decoded.id).select('-password -resetToken');
+        if (!user) {
+            return res.status(401).json({ message: 'Utilisateur non trouvé' });
+        }
 
-if (!user) {
-    return res.status(401).json({ message: 'User not found' });
-}
+        if (!user.isActive) {
+            return res.status(401).json({ message: 'Compte désactivé' });
+        }
 
-req.user = user;
-next();
+        if (user.statut === 'inactif') {
+            return res.status(401).json({ message: 'Compte inactif' });
+        }
 
-} catch (error) {
-if (error.name === 'TokenExpiredError') {
-    return res.status(401).json({ message: 'Token expired' });
-}
-if (error.name === 'JsonWebTokenError') {
-    return res.status(401).json({ message: 'Invalid token' });
-}
-console.error('Authentication error:', error);
-res.status(500).json({ message: 'Authentication failed' });
-}
+        req.user = user;
+        next();
+    } catch (error) {
+        return res.status(403).json({ message: 'Token invalide' });
+    }
 };
 
-const requireAdmin = (req, res, next) => {
-if (!req.user || req.user.role !== 'admin') {
-return res.status(403).json({ message: 'Admin access required' });
-}
-next();
+// Middleware pour restreindre l'accès admin aux données sensibles
+const restrictAdminAccess = (req, res, next) => {
+    if (req.user.role === 'admin' && req.user.entreprise !== 'system') {
+        return res.status(403).json({ 
+            message: 'Accès restreint. Admin système seulement.' 
+        });
+    }
+    next();
 };
 
-const optionalAuth = async (req, res, next) => {
-const authHeader = req.headers['authorization'];
-const token = authHeader && authHeader.split(' ')[1];
+// Middleware pour empêcher l'accès cross-entreprise
+const preventCrossCompanyAccess = async (req, res, next) => {
+    try {
+        if (req.user.role === 'admin' && req.user.entreprise === 'system') {
+            return next(); // Admin système a accès à tout
+        }
 
-if (token) {
-try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret_key');
-    const user = await User.findById(decoded.userId).select('-password');
-    req.user = user;
-} catch (error) {
-    // Token is invalid but we continue anyway
-    console.error('Optional auth error:', error);
-}
-}
+        // Pour les routes avec :id, vérifier l'entreprise
+        if (req.params.id) {
+            const targetUser = await User.findById(req.params.id).select('entreprise');
+            if (!targetUser) {
+                return res.status(404).json({ message: 'Utilisateur non trouvé' });
+            }
 
-next();
+            if (targetUser.entreprise !== req.user.entreprise) {
+                return res.status(403).json({ 
+                    message: 'Accès interdit à cette entreprise' 
+                });
+            }
+        }
+
+        next();
+    } catch (error) {
+        res.status(500).json({ message: 'Erreur de vérification des permissions' });
+    }
 };
 
-module.exports = {
-authenticateToken,
-requireAdmin,
-optionalAuth
+module.exports = { 
+    authenticateToken, 
+    restrictAdminAccess, 
+    preventCrossCompanyAccess 
 };

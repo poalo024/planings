@@ -1,45 +1,25 @@
-const API_URL = 'http://localhost:5000/api/users';
+// services/api.js
+import axios from "axios";
 
+const api = axios.create({
+baseURL: "http://localhost:5000/api", // adapte selon ton backend
+});
+
+// Permet de définir le token sur toutes les requêtes
+export const setAuthToken = (token) => {
+if (token) {
+api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+} else {
+delete api.defaults.headers.common["Authorization"];
+}
+};
+
+// 🔹 Fonction logout
 export const auth = {
-register: async (userData) => {
-const response = await fetch(`${API_URL}/register`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(userData),
-});
-
-if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Erreur lors de l\'inscription');
-}
-
-return await response.json();
-},
-
-login: async (credentials) => {
-const response = await fetch(`${API_URL}/login`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(credentials),
-});
-
-if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || 'Erreur lors de la connexion');
-}
-
-const data = await response.json();
-if (data.token) {
-    localStorage.setItem('user', JSON.stringify(data));
-}
-return data;
-},
-
 logout: () => {
-localStorage.removeItem('user');
-},
-
-getCurrentUser: () => {
-return JSON.parse(localStorage.getItem('user'));
+localStorage.removeItem("user");
+setAuthToken(null);
 },
 };
+
+export default api;
