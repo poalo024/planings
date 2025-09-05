@@ -7,13 +7,25 @@ const userSchema = new mongoose.Schema({
     username: { type: String, required: true, unique: true, trim: true },
     email: { type: String, required: true, unique: true, trim: true, lowercase: true },
     password: { type: String },
-    role: { type: String, enum: ['user', 'manager', 'admin'], default: 'user' },
+
+    role: { 
+        type: String, 
+        enum: ['user', 'employee', 'manager', 'admin', 'system-admin'], 
+        default: 'user' 
+    },
+
+    // Manager lié à une entreprise
+    entrepriseId: { type: mongoose.Schema.Types.ObjectId, ref: 'Entreprise' },
+
+    // Info entreprise simple pour users/admin
     entreprise: { type: String, required: true },
+
     isActive: { type: Boolean, default: false },
     resetToken: { type: String },
-    
-    // NOUVEAUX CHAMPS
-    profession: { type: String, trim: true }, // Profession libre
+    resetTokenExpiry: { type: Date },   // ✅ ajouté ici
+
+    // Nouveaux champs RH
+    profession: { type: String, trim: true },
     typeContrat: { 
         type: String, 
         enum: [
@@ -25,7 +37,6 @@ const userSchema = new mongoose.Schema({
         ],
         trim: true 
     },
-    
     poste: { type: String, trim: true },
     telephone: { type: String, trim: true },
     dateEmbauche: { type: Date },
@@ -51,7 +62,7 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Exclure le password et resetToken quand on convertit en JSON
+// Exclure password et resetToken quand on convertit en JSON
 userSchema.methods.toJSON = function() {
     const user = this.toObject();
     delete user.password;

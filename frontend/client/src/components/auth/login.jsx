@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 
 export default function LoginPage({ setUser }) {
     const [email, setEmail] = useState('');
@@ -30,8 +31,18 @@ export default function LoginPage({ setUser }) {
             localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
 
-            navigate('/dashboard');
+            // Redirection selon le rôle
+            if (data.user.role === 'admin' && data.user.entreprise === 'system') {
+                navigate('/system-dashboard');
+            } else if (data.user.role === 'manager') {
+                navigate('/admin-dashboard');
+            } else {
+                navigate('/user-dashboard');
+            }
+
+            toast.success(`Bienvenue, ${data.user.username || data.user.nom}!`);
         } catch (err) {
+            console.error(err);
             setError('Erreur serveur, réessayez.');
         }
     };
@@ -41,10 +52,26 @@ export default function LoginPage({ setUser }) {
             <div style={styles.loginBox}>
                 <h2>Connexion</h2>
                 <form onSubmit={handleLogin}>
-                    <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required style={styles.input} />
-                    <input type="password" placeholder="Mot de passe" value={password} onChange={(e) => setPassword(e.target.value)} required style={styles.input} />
+                    <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                        style={styles.input}
+                    />
+                    <input
+                        type="password"
+                        placeholder="Mot de passe"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        style={styles.input}
+                    />
                     {error && <p style={styles.error}>{error}</p>}
-                    <button type="submit" style={styles.button}>Se connecter</button>
+                    <button type="submit" style={styles.button}>
+                        Se connecter
+                    </button>
                 </form>
             </div>
         </div>
@@ -52,9 +79,39 @@ export default function LoginPage({ setUser }) {
 }
 
 const styles = {
-    container: { display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#e0f7fa' },
-    loginBox: { padding: '2rem', background: '#fff', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.2)', width: '350px' },
-    input: { display: 'block', width: '100%', padding: '0.8rem', marginBottom: '1rem', borderRadius: '8px', border: '1px solid #ccc' },
-    button: { width: '100%', padding: '0.8rem', borderRadius: '8px', border: 'none', background: '#00796b', color: '#fff', cursor: 'pointer' },
-    error: { color: 'red', marginBottom: '1rem' }
+    container: {
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        background: '#e0f7fa',
+    },
+    loginBox: {
+        padding: '2rem',
+        background: '#fff',
+        borderRadius: '12px',
+        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+        width: '350px',
+    },
+    input: {
+        display: 'block',
+        width: '100%',
+        padding: '0.8rem',
+        marginBottom: '1rem',
+        borderRadius: '8px',
+        border: '1px solid #ccc',
+    },
+    button: {
+        width: '100%',
+        padding: '0.8rem',
+        borderRadius: '8px',
+        border: 'none',
+        background: '#00796b',
+        color: '#fff',
+        cursor: 'pointer',
+    },
+    error: {
+        color: 'red',
+        marginBottom: '1rem',
+    },
 };
